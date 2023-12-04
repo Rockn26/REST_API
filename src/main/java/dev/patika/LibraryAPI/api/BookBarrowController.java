@@ -45,8 +45,11 @@ public class BookBarrowController {
         BookBorrowing saveBookBarrow = this.modelMapper.forRequest().map(barrowSaveRequest, BookBorrowing.class);
         Book book = this.bookService.get(barrowSaveRequest.getBookId());
         saveBookBarrow.setBook(book);
-
         this.bookBarrowService.save(saveBookBarrow);
+
+        if (book.getStock() > 0) book.setStock(book.getStock() -1);
+
+
         return ResultHelper.created(this.modelMapper.forResponse().map(saveBookBarrow, BookBorrowResponse.class));
     }
 
@@ -81,6 +84,11 @@ public class BookBarrowController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public Result delete(@PathVariable("id") int id){
+        BookBorrowing deletedBorrow = this.bookBarrowService.get(id);
+        int bookId = (int) deletedBorrow.getBook().getId();
+        Book book = this.bookService.get(bookId);
+        book.setStock(book.getStock() + 1);
+        this.bookService.update(book);
         this.bookBarrowService.delete(id);
         return ResultHelper.ok();
     }
